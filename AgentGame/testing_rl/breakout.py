@@ -96,8 +96,45 @@ def screen_and_histograms():
             np.savetxt("../out_files/ball_x.csv", ball_x.reshape(1,-1), delimiter=' ', header='', fmt="%.2f")
             np.savetxt("../out_files/ball_y.csv", ball_y.reshape(-1,1), delimiter=' ', header='', fmt="%.2f")
             np.savetxt("../out_files/palette.csv", palette.reshape(1,-1), delimiter=' ', header='', fmt="%.2f")
+            img = np.zeros((100, 144))
+        if t>12:
+            break
 
-            #np.savetxt("img.csv", img, delimiter=' ', header='', fmt="%.0f")
+def screen_and_histograms_v2():
+    env = gym.make("BreakoutNoFrameskip-v4", render_mode='human')
+    n_actions = env.action_space.n
+    state, info = env.reset()
+    n_observations = len(state)
+    print("Obs space ", n_observations)
+    print("state space ", state.shape)
+    # Initialize the environment and get its state
+    init_state, info = env.reset()
+    env.render()
+    img = np.zeros((100,144))
+    for t in count():
+        action = random.randrange(n_actions)
+        observation, reward, terminated, truncated, _ = env.step(action)
+        done = terminated or truncated
+        # we cut all unimportant screen elements, blocks in first level are above 93 row.
+        # we stuck with increasing importance
+        # 93:189 -- image above palette
+        # 189:193 -- palette
+        img = img/2+observation[93:193,8:-8,0]
+        if done:
+            print("Duration:",t+1)
+            return
+        if t>0 and t%4==0:
+            # no stacking
+            x = img.sum(axis=0)/255/5
+            y = img.sum(axis=1)/255/5
+            network_input = np.hstack((x,y))
+            print("x shape", x.shape)
+            print("y shape:", y.shape)
+            print("net_input shape:", network_input.shape)
+            print("img shape:",img.shape)
+            np.savetxt("../out_files/img.csv", img, delimiter=' ', header='', fmt="%.0f")
+            np.savetxt("../out_files/x.csv", x.reshape(1,-1), delimiter=' ', header='', fmt="%.2f")
+            np.savetxt("../out_files/y.csv", y.reshape(-1,1), delimiter=' ', header='', fmt="%.2f")
             img = np.zeros((100, 144))
         if t>12:
             break
@@ -143,5 +180,6 @@ def rom_data():
 
 print('Complete')
 #screen_and_convolution()
-screen_and_histograms()
+#screen_and_histograms()
+screen_and_histograms_v2()
 #rom_data()
