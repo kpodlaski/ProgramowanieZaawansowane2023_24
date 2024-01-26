@@ -225,8 +225,35 @@ for i_episode in range(num_episodes):
                 print("Episode:",len(episode_durations),", duration:",t+1)
             break
 
+def play():
+    # Initialize the environment and get its state
+    env = gym.make("CartPole-v1", render_mode='human')
+    state, info = env.reset()
+    env.render()
+    state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+    for t in count():
+        action = select_action(state)
+        observation, reward, terminated, truncated, _ = env.step(action.item())
+        reward = torch.tensor([reward], device=device)
+        done = terminated or truncated
+
+        if terminated:
+            next_state = None
+        else:
+            next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+        # Move to the next state
+        state = next_state
+
+        # Perform one step of the optimization (on the policy network)
+        optimize_model()
+
+        if done:
+            print("Duration:",t+1)
+            return
+
 print('Complete')
 plot_durations(show_result=True)
 plt.ioff()
 plt.show()
+play()
 
